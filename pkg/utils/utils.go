@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -52,6 +53,32 @@ func GenerateID() string {
 
 	ID := fmt.Sprintf("%d%02d%02d.%09d", year, int(month), day, randomNumber)
 	return ID
+}
+
+// IsValidEmailFormat checks if the input, v is in a valid email format.
+// Return true if valid; false if not valid.
+func IsValidEmailFormat(v string) bool {
+	pattern := regexp.MustCompile(`^[a-z0-9_]+[.-][a-z0-9]+@\w+\.([a-z0-9]{2,4}|[a-z]{2}.[a-z]{2})$`)
+	return pattern.MatchString(v)
+}
+
+// IsAlphaAndSpaceOnly checks if the input, v contains only alphabets and white space characters (i.e. space or tab) only.
+// Return true if valid; false if not valid.
+func IsAlphaAndSpaceOnly(v string) bool {
+	pattern := regexp.MustCompile(`^[a-zA-z\s]+$`)
+	return pattern.MatchString(v)
+}
+
+// AreAllowedCharacters checks if the input, v contains any of the following characters that are not allowed:
+// - /
+// - \
+// - -
+// Returns
+// - true if v does not contain any not allowed characters;
+// - false if v contains any of the not allowed characters.
+func AreAllowedCharacters(v string) bool {
+	pattern := regexp.MustCompile(`^([a-zA-z0-9]|[^\/-])+$`)
+	return pattern.MatchString(v)
 }
 
 // SendErrorMsgToClient prepares:
@@ -122,11 +149,28 @@ func SendDataToClient(w *http.ResponseWriter, data []byte, msg string) {
 	} else {
 		_msg = msg
 	}
-	body := fmt.Sprintf(`{
-		"ok" : true,
-		"msg" : "%s",
-		"data" : %s
-	}`, _msg, string(data))
-	(*w).Write([]byte(body))
+
+	if data != nil {
+
+		// data is available
+		body := fmt.Sprintf(`{
+			"ok" : true,
+			"msg" : "%s",
+			"data" : %s
+		}`, _msg, string(data))
+		(*w).Write([]byte(body))
+		//
+	} else {
+
+		// no data
+		body := fmt.Sprintf(`{
+			"ok" : true,
+			"msg" : "%s",
+			"data" : {}
+		}`, _msg)
+		(*w).Write([]byte(body))
+		//
+	}
+
 	//
 }

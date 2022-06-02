@@ -198,6 +198,16 @@ func (ctl *CrudCtl) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// checks.  minimize sql injection risk.
+	ok, err := sanitizeCreateInput(newUserIn)
+	if !ok || err != nil {
+		// fail to sanitize
+		errmsg := fmt.Sprintf(`[USER-CTL] %s`, err)
+		customErr := errors.New(errmsg)
+		utils.SendErrorMsgToClient(&w, customErr)
+		return
+	}
+
 	// bcrypt the password.
 	pwhash, err := bcrypt.GenerateFromPassword([]byte(newUserIn.Password), bcrypt.MinCost)
 	if err != nil {
@@ -269,6 +279,16 @@ func (ctl *CrudCtl) UpdateById(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		customErr := errors.New(`[USER-CTL] fail to parse result into JSON`)
 		utils.SendBadRequestMsgToClient(&w, customErr)
+		return
+	}
+
+	// checks. minimize sql injection risk.
+	ok, err := sanitizeUpdateInput(update)
+	if !ok || err != nil {
+		// fail to sanitize
+		errmsg := fmt.Sprintf(`[USER-CTL] %s`, err)
+		customErr := errors.New(errmsg)
+		utils.SendErrorMsgToClient(&w, customErr)
 		return
 	}
 
@@ -359,4 +379,171 @@ func (ctl *CrudCtl) DeleteById(w http.ResponseWriter, r *http.Request) {
 
 	utils.SendDataToClient(&w, data, "user data deleted")
 
+}
+
+// ResetPasswordById reset the password of the specific user, identified by id.
+func (ctl *CrudCtl) ResetPasswordById(w http.ResponseWriter, r *http.Request) {
+
+	params := mux.Vars(r)
+	id := params["id"]
+	if strings.TrimSpace(id) == "" {
+		// empty id string
+		customErr := errors.New(`[USER-CTL] id is a require input and cannot be empty`)
+		utils.SendBadRequestMsgToClient(&w, customErr)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	// get the JSON body.
+	reset := modelsUser.ResetPasswordParams{}
+	err := utils.ParseBody(r, &reset)
+	if err != nil {
+		customErr := errors.New(`[USER-CTL] fail to parse result into JSON`)
+		utils.SendBadRequestMsgToClient(&w, customErr)
+		return
+	}
+
+	// checks. minimize sql injection risk.
+	ok, err := sanitizePasswordResetInput(reset)
+	if !ok || err != nil {
+		// fail to sanitize
+		errmsg := fmt.Sprintf(`[USER-CTL] %s`, err)
+		customErr := errors.New(errmsg)
+		utils.SendErrorMsgToClient(&w, customErr)
+		return
+	}
+
+	// instantiate a user model struct.
+	um := modelsUser.New(ctl.db)
+
+	// check if the user data exist (before updating).
+	_, err = um.GetUserById(id)
+	if err != nil {
+		// not found.
+		customErr := errors.New(`[USER-CTL] user data not found`)
+		utils.SendNotFoundMsgToClient(&w, customErr)
+		return
+	}
+
+	// bcrypt the password.
+	pwhash, err := bcrypt.GenerateFromPassword([]byte(reset.Password), bcrypt.MinCost)
+	if err != nil {
+		// fail to hash password.
+		customErr := errors.New(`[USER-CTL] fail to process the password`)
+		utils.SendErrorMsgToClient(&w, customErr)
+		return
+	}
+
+	// prepare the parameter for password reset
+	// using the user model
+	resetHash := modelsUser.ResetPasswordParams{}
+	resetHash.Password = string(pwhash)
+
+	err = um.ResetPassword(id, resetHash)
+	if err != nil {
+		customErr := errors.New(`[USER-CTL] fail to reset password`)
+		utils.SendErrorMsgToClient(&w, customErr)
+		return
+	}
+
+	// prepare the response.
+	utils.SendDataToClient(&w, nil, `[USER-CTL] password reset done`)
+
+}
+
+// sanitizeCreateInput executes checks all the input values passed in for creating user data.
+func sanitizeCreateInput(input paramsAdd) (bool, error) {
+
+	// check for empty string.
+	if strings.TrimSpace(input.Password) == "" {
+		// password is empty.
+		return false, errors.New(`required attribute, "password" cannot be an empty value`)
+	}
+
+	if strings.TrimSpace(input.NameFirst) == "" {
+		// first name is empty.
+		return false, errors.New(`required attribute, "nameFirst" cannot be an empty value`)
+	}
+
+	if strings.TrimSpace(input.NameLast) == "" {
+		// last name is empty.
+		return false, errors.New(`required attribute, "nameLast" cannot be an empty value`)
+	}
+
+	if strings.TrimSpace(input.Email) == "" {
+		// last name is empty.
+		return false, errors.New(`required attribute, "email" cannot be an empty value`)
+	}
+
+	// email formate check
+	if !utils.IsValidEmailFormat(input.Email) {
+		return false, errors.New(`required attribute, "email" must be in a valid format`)
+	}
+
+	// alpha and space only check
+	if !utils.IsAlphaAndSpaceOnly(input.NameFirst) {
+		// fist name contains not allowed characters
+		return false, errors.New(`required attribute, "nameFirst" should contain only alpahbets or space only`)
+	}
+
+	if !utils.IsAlphaAndSpaceOnly(input.NameLast) {
+		// fist name contains not allowed characters
+		return false, errors.New(`required attribute, "nameLast" should contain only alpahbets or space only`)
+	}
+
+	// allowed characters only check
+	if !utils.AreAllowedCharacters(input.Password) {
+		// password contains not allowed characters
+		return false, errors.New(`required attribute, "password" should contain characters that are not allowed`)
+	}
+
+	return true, nil
+}
+
+// sanitizeUpdateInput execute checks on the input parameters passed in for user data update.
+func sanitizeUpdateInput(input modelsUser.UpdateUser) (bool, error) {
+
+	// check for empty string.
+
+	if strings.TrimSpace(input.NameFirst) == "" {
+		// first name is empty.
+		return false, errors.New(`required attribute, "nameFirst" cannot be an empty value`)
+	}
+
+	if strings.TrimSpace(input.NameLast) == "" {
+		// last name is empty.
+		return false, errors.New(`required attribute, "nameLast" cannot be an empty value`)
+	}
+
+	// alpha and space only check
+	if !utils.IsAlphaAndSpaceOnly(input.NameFirst) {
+		// fist name contains not allowed characters
+		return false, errors.New(`required attribute, "nameFirst" should contain only alpahbets or space only`)
+	}
+
+	if !utils.IsAlphaAndSpaceOnly(input.NameLast) {
+		// fist name contains not allowed characters
+		return false, errors.New(`required attribute, "nameLast" should contain only alpahbets or space only`)
+	}
+
+	return true, nil
+}
+
+// sanitizePasswordResetInput execute checks on the input parameter passed in for password reset.
+func sanitizePasswordResetInput(input modelsUser.ResetPasswordParams) (bool, error) {
+
+	// check for empty string.
+	if strings.TrimSpace(input.Password) == "" {
+		// password is empty.
+		return false, errors.New(`required attribute, "password" cannot be an empty value`)
+	}
+
+	// allowed characters only check
+	if !utils.AreAllowedCharacters(input.Password) {
+		// password contains not allowed characters
+		return false, errors.New(`required attribute, "password" should contain characters that are not allowed`)
+	}
+
+	return true, nil
 }

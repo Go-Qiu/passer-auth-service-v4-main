@@ -28,6 +28,10 @@ type NewUserRegister struct {
 	PwHash string `json:"pwHash"`
 }
 
+type ResetPasswordParams struct {
+	Password string `json:"password"`
+}
+
 type UserModel struct {
 	db *sql.DB
 }
@@ -178,6 +182,23 @@ func (um *UserModel) UpdateUserById(id string, update UpdateUser) error {
 
 	// execute the prepared sql script.
 	_, err := um.db.Exec(stmt, update.NameFirst, update.NameLast, update.IsActive, update.IsAgent, id)
+	if err != nil {
+		return err
+	}
+
+	// ok.
+	return nil
+}
+
+func (um *UserModel) ResetPassword(id string, reset ResetPasswordParams) error {
+
+	stmt := `UPDATE Users 
+	SET 
+		pwHash = ?
+	WHERE id = ?;`
+
+	// execute the prepared sql script.
+	_, err := um.db.Exec(stmt, reset.Password, id)
 	if err != nil {
 		return err
 	}
