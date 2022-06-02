@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"passer-auth-service-v4/pkg/models"
+	modelsUser "passer-auth-service-v4/pkg/models/user"
 	"passer-auth-service-v4/pkg/utils"
 
 	"github.com/gorilla/mux"
@@ -29,8 +29,8 @@ func (ctl *CrudCtl) GetAll(w http.ResponseWriter, r *http.Request) {
 	// prepare the response header.
 	w.Header().Set("Content-Type", "application/json")
 
-	var user models.User
-	u, err := user.GetAll(ctl.db)
+	um := modelsUser.New(ctl.db)
+	u, err := um.GetAll()
 	if err != nil {
 		// exception handling
 		utils.SendErrorMsgToClient(&w, err)
@@ -57,7 +57,7 @@ func (ctl *CrudCtl) GetById(w http.ResponseWriter, r *http.Request) {
 	// setup the response header attributes
 	w.Header().Set("Content-Type", "application/json")
 
-	var user models.User
+	um := modelsUser.New(ctl.db)
 	id := params["userid"]
 	if id == "" {
 		// empty id string
@@ -69,7 +69,46 @@ func (ctl *CrudCtl) GetById(w http.ResponseWriter, r *http.Request) {
 	// sanitize the id here.
 
 	// ok.
-	u, err := user.GetUserById(ctl.db, id)
+	u, err := um.GetUserById(id)
+	if err != nil {
+		customErr := errors.New(`[USER-CTL] fail to execute the record search`)
+		utils.SendErrorMsgToClient(&w, customErr)
+		return
+	}
+
+	// marshal the record into JSON.
+	data, err := json.Marshal(u)
+	if err != nil {
+		customErr := errors.New(`[USER-CTL] fail to parse result into JSON`)
+		utils.SendErrorMsgToClient(&w, customErr)
+		return
+	}
+
+	// ok.
+	utils.SendDataToClient(&w, data)
+	//
+}
+
+// GetByEmail return the specific user record
+func (ctl *CrudCtl) GetByEmail(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+
+	// setup the response header attributes
+	w.Header().Set("Content-Type", "application/json")
+
+	um := modelsUser.New(ctl.db)
+	email := params["email"]
+	if email == "" {
+		// empty id string
+		customErr := errors.New(`[USER-CTL] email is a require input and cannot be empty`)
+		utils.SendErrorMsgToClient(&w, customErr)
+		return
+	}
+
+	// sanitize the id here.
+
+	// ok.
+	u, err := um.GetUserByEmail(email)
 	if err != nil {
 		customErr := errors.New(`[USER-CTL] fail to execute the record search`)
 		utils.SendErrorMsgToClient(&w, customErr)

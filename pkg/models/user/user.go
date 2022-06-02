@@ -1,4 +1,4 @@
-package models
+package modelsUser
 
 import (
 	"database/sql"
@@ -16,14 +16,23 @@ type User struct {
 	DateCreated string `json:"dateCreated"`
 }
 
-func (u *User) CreateUser() *User {
+type UserModel struct {
+	db *sql.DB
+}
+
+func New(db *sql.DB) *UserModel {
+	model := UserModel{db: db}
+	return &model
+}
+
+func (um *UserModel) CreateUser() *User {
 
 	// create user code here.
-
+	u := &User{}
 	return u
 }
 
-func (u *User) GetAll(db *sql.DB) ([]User, error) {
+func (um *UserModel) GetAll() (*[]User, error) {
 
 	stmt := `SELECT 
 	  id
@@ -35,7 +44,7 @@ func (u *User) GetAll(db *sql.DB) ([]User, error) {
 	, dateCreated
 	FROM PASSER_AUTH.Users
 	`
-	results, err := db.Query(stmt)
+	results, err := um.db.Query(stmt)
 	if err != nil {
 		return nil, err
 	}
@@ -53,11 +62,14 @@ func (u *User) GetAll(db *sql.DB) ([]User, error) {
 
 		users = append(users, user)
 	}
-	return users, nil
+	return &users, nil
 	//
 }
 
-func (u *User) GetUserById(db *sql.DB, id string) (*User, error) {
+func (um *UserModel) GetUserById(id string) (*User, error) {
+
+	// instantiate a User struct
+	u := User{}
 
 	stmt := `SELECT 
 	id
@@ -70,16 +82,41 @@ func (u *User) GetUserById(db *sql.DB, id string) (*User, error) {
 	FROM PASSER_AUTH.Users 
 	WHERE id = ?
 	`
-	row := db.QueryRow(stmt, id)
+	row := um.db.QueryRow(stmt, id)
 	err := row.Scan(&u.Id, &u.Email, &u.NameFirst, &u.NameLast, &u.IsActive, &u.IsAgent, &u.DateCreated)
 	if err != nil {
 		return nil, err
 	}
 
-	return u, nil
+	return &u, nil
 }
 
-func (u *User) DeleteUserById(db *sql.DB, id string) error {
+func (um *UserModel) GetUserByEmail(email string) (*User, error) {
+
+	// instantiate a User struct.
+	u := User{}
+
+	stmt := `SELECT 
+	id
+	, email
+	, nameFirst
+	, nameLast
+	, isActive
+	, isAgent
+	, dateCreated
+	FROM PASSER_AUTH.Users 
+	WHERE id = ?
+	`
+	row := um.db.QueryRow(stmt, email)
+	err := row.Scan(&u.Id, &u.Email, &u.NameFirst, &u.NameLast, &u.IsActive, &u.IsAgent, &u.DateCreated)
+	if err != nil {
+		return nil, err
+	}
+
+	return &u, nil
+}
+
+func (um *UserModel) DeleteUserById(id string) error {
 
 	// delete user by id code here.
 
