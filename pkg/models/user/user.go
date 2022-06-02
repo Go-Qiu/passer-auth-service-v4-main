@@ -16,6 +16,11 @@ type User struct {
 	DateCreated string `json:"dateCreated"`
 }
 
+type NewUserRegister struct {
+	User
+	PwHash string `json:"pwHash"`
+}
+
 type UserModel struct {
 	db *sql.DB
 }
@@ -114,6 +119,31 @@ func (um *UserModel) GetUserByEmail(email string) (*User, error) {
 	}
 
 	return &u, nil
+}
+
+// Add will add a user record into the database.
+func (um *UserModel) AddUser(new *NewUserRegister) error {
+
+	stmt := `INSERT INTO Users (
+		id, email
+		, nameFirst, nameLast
+		, isActive, isAgent
+		, dateCreated, pwHash
+	) VALUES (
+		?, ?
+		,?, ?
+		,?, ?
+		,?, ?
+	);`
+
+	// execute the prepared sql script.
+	_, err := um.db.Exec(stmt, new.Id, new.Email, new.NameFirst, new.NameLast, new.IsActive, new.IsAgent, new.DateCreated, new.PwHash)
+	if err != nil {
+		return err
+	}
+
+	// ok. added.
+	return nil
 }
 
 func (um *UserModel) DeleteUserById(id string) error {

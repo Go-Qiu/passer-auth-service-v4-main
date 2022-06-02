@@ -6,29 +6,34 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"net/http"
+	"strings"
 	"time"
 )
 
-func ParseBody(r *http.Request, x interface{}) {
+func ParseBody(r *http.Request, x interface{}) error {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		// exception handling code here
-		return
+		return err
 	}
+	defer r.Body.Close()
 
 	// ok. parse json to struct.
 	err = json.Unmarshal([]byte(body), x)
 	if err != nil {
 		// exception handling code here
-		return
+		return err
 	}
+
+	// ok.
+	return nil
 }
 
 // GetRandomNumber returns a random number.
 func GetRandomNumber() int {
 
 	rand.Seed(time.Now().UnixNano())
-	n := rand.Intn(9999999) + 1
+	n := rand.Intn(99999999) + 1
 	return n
 }
 
@@ -45,7 +50,7 @@ func GenerateID() string {
 	year, month, day := time.Now().Local().Date()
 	randomNumber := GetRandomNumber()
 
-	ID := fmt.Sprintf("%d.%02d.%02d.%08d", year, int(month), day, randomNumber)
+	ID := fmt.Sprintf("%d%02d%02d.%09d", year, int(month), day, randomNumber)
 	return ID
 }
 
@@ -90,13 +95,21 @@ func SendNotFoundMsgToClient(w *http.ResponseWriter, err error) {
 //   * "msg" attriubte;
 //   * "data" attribute, set to the data passed in
 // and send the response to the client.
-func SendDataToClient(w *http.ResponseWriter, data []byte) {
+func SendDataToClient(w *http.ResponseWriter, data []byte, msg string) {
+
 	(*w).WriteHeader(http.StatusOK)
+
+	var _msg string
+	if strings.TrimSpace(msg) == "" {
+		_msg = "n.a."
+	} else {
+		_msg = msg
+	}
 	body := fmt.Sprintf(`{
 		"ok" : true,
-		"msg" : "found",
+		"msg" : "%s",
 		"data" : %s
-	}`, string(data))
+	}`, _msg, string(data))
 	(*w).Write([]byte(body))
 	//
 }
