@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"passer-auth-service-v4/pkg/models"
 	"passer-auth-service-v4/pkg/utils"
@@ -47,7 +46,7 @@ func (ctl *CrudCtl) GetAll(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// ok.
-	utils.SendListToClient(&w, list)
+	utils.SendDataToClient(&w, list)
 	//
 }
 
@@ -57,17 +56,36 @@ func (ctl *CrudCtl) GetById(w http.ResponseWriter, r *http.Request) {
 
 	// setup the response header attributes
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
 
-	// prepare the response body.
-	body := fmt.Sprintf(`{
-		"ok" : true,
-		"msg" : "User Id passed in : %s"
-		"data" : {}
-	}`, params["userid"])
+	var user models.User
+	id := params["userid"]
+	if id == "" {
+		// empty id string
+		customErr := errors.New(`[USER-CTL] userid is a require input and cannot be empty`)
+		utils.SendErrorMsgToClient(&w, customErr)
+		return
+	}
 
-	// write the content and send the response back to the requestor.
-	w.Write([]byte(body))
+	// sanitize the id here.
+
+	// ok.
+	u, err := user.GetUserById(ctl.db, id)
+	if err != nil {
+		customErr := errors.New(`[USER-CTL] fail to execute the record search`)
+		utils.SendErrorMsgToClient(&w, customErr)
+		return
+	}
+
+	// marshal the record into JSON.
+	data, err := json.Marshal(u)
+	if err != nil {
+		customErr := errors.New(`[USER-CTL] fail to parse result into JSON`)
+		utils.SendErrorMsgToClient(&w, customErr)
+		return
+	}
+
+	// ok.
+	utils.SendDataToClient(&w, data)
 	//
 }
 

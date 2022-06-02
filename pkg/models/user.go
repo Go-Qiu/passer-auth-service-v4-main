@@ -4,7 +4,7 @@ import (
 	"database/sql"
 )
 
-var db *sql.DB
+// var db *sql.DB
 
 type User struct {
 	Id          string `json:"id"`
@@ -57,11 +57,26 @@ func (u *User) GetAll(db *sql.DB) ([]User, error) {
 	//
 }
 
-func (u *User) GetUserById(db *sql.DB, id string) *User {
+func (u *User) GetUserById(db *sql.DB, id string) (*User, error) {
 
-	// get user by id code here
+	stmt := `SELECT 
+	id
+	, email
+	, nameFirst
+	, nameLast
+	, isActive
+	, isAgent
+	, dateCreated
+	FROM PASSER_AUTH.Users 
+	WHERE id = ?
+	`
+	row := db.QueryRow(stmt, id)
+	err := row.Scan(&u.Id, &u.Email, &u.NameFirst, &u.NameLast, &u.IsActive, &u.IsAgent, &u.DateCreated)
+	if err != nil {
+		return nil, err
+	}
 
-	return u
+	return u, nil
 }
 
 func (u *User) DeleteUserById(db *sql.DB, id string) error {

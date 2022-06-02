@@ -49,7 +49,12 @@ func GenerateID() string {
 	return ID
 }
 
-// SendErrorMsgToClient sends a http error status (in the header) with the JSON body to the requesting client.
+// SendNotFoundMsgToClient prepares:
+// - a INTERNAL SERVER ERROR response header;
+// - a JSON body containing:
+//   * "ok" attribute, set to false;
+//   * "msg" attribute set to the error message passed in;
+//   * "data" attribute set to {}
 func SendErrorMsgToClient(w *http.ResponseWriter, err error) {
 	(*w).WriteHeader(http.StatusInternalServerError)
 	body := fmt.Sprintf(`{
@@ -61,7 +66,31 @@ func SendErrorMsgToClient(w *http.ResponseWriter, err error) {
 	//
 }
 
-func SendListToClient(w *http.ResponseWriter, data []byte) {
+// SendNotFoundMsgToClient prepares:
+// - a NOT FOUND response header;
+// - a JSON body containing:
+//   * "ok" attribute, set to false;
+//   * "msg" attribute set to the error message passed in;
+//   * "data" attribute set to {}
+func SendNotFoundMsgToClient(w *http.ResponseWriter, err error) {
+	(*w).WriteHeader(http.StatusNotFound)
+	body := fmt.Sprintf(`{
+			"ok" : false,
+			"msg" : "%s",
+			"data" : {}
+		}`, err.Error())
+	(*w).Write([]byte(body))
+	//
+}
+
+// SendDataToClient prepares:
+// - a OK header;
+// - a JSON body containing:
+//   * "ok" attribute, set to true;
+//   * "msg" attriubte;
+//   * "data" attribute, set to the data passed in
+// and send the response to the client.
+func SendDataToClient(w *http.ResponseWriter, data []byte) {
 	(*w).WriteHeader(http.StatusOK)
 	body := fmt.Sprintf(`{
 		"ok" : true,
