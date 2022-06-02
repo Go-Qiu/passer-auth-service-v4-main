@@ -148,7 +148,14 @@ func (um *UserModel) AddUser(new *NewUserRegister) error {
 
 func (um *UserModel) DeleteUserById(id string) error {
 
-	// delete user by id code here.
+	stmt := `DELETE FROM Users WHERE id = ?;`
 
+	// execute the prepared sql script.
+	_, err := um.db.Exec(stmt, id)
+	if err != nil {
+		return err
+	}
+
+	// ok. deleted.
 	return nil
 }

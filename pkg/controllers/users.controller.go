@@ -10,6 +10,7 @@ import (
 	"os"
 	modelsUser "passer-auth-service-v4/pkg/models/user"
 	"passer-auth-service-v4/pkg/utils"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -257,24 +258,54 @@ func (ctl *CrudCtl) UpdateById(w http.ResponseWriter, r *http.Request) {
 
 	// prepare the response.
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	body := `{
-		"ok" : true,
-		"msg" : "Reached UpdateById endpoint.",
-		"data" : {}
-	}`
 
-	// send out the response.
-	w.Write([]byte(body))
 }
 
 func (ctl *CrudCtl) DeleteById(w http.ResponseWriter, r *http.Request) {
+
+	// setup the response header.
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	body := `{
-		"ok" : true,
-		"msg" : "Reached DeleteById endpoint.",
-		"data" : {}
-	}`
-	w.Write([]byte(body))
+
+	// get the id from the url
+	params := mux.Vars(r)
+	id := params["id"]
+
+	// instantiate a user model.
+	um := modelsUser.New(ctl.db)
+
+	// check for empty id
+	if strings.TrimSpace(id) == "" {
+		// empty id
+		customErr := errors.New(`[USER-CTL] required id is not passed in or empty`)
+		utils.SendBadRequestMsgToClient(&w, customErr)
+		return
+	}
+
+	// check if the id is of the specific format
+
+	// check if the user data (to be deleted) exist.
+	u, err := um.GetUserById(id)
+	if err != nil {
+		customErr := errors.New(`[USER-CTL] fail to find the user data`)
+		utils.SendNotFoundMsgToClient(&w, customErr)
+		return
+	}
+
+	// marshal the record (to be deleted) into JSON.
+	data, err := json.Marshal(u)
+	if err != nil {
+		customErr := errors.New(`[USER-CTL] fail to parse the user data into JSON`)
+		utils.SendErrorMsgToClient(&w, customErr)
+		return
+	}
+
+	err = um.DeleteUserById(id)
+	if err != nil {
+		customErr := errors.New(`[USER-CTL] fail to delete user`)
+		utils.SendErrorMsgToClient(&w, customErr)
+		return
+	}
+
+	utils.SendDataToClient(&w, data, "user data deleted")
+
 }

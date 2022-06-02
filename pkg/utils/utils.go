@@ -54,7 +54,7 @@ func GenerateID() string {
 	return ID
 }
 
-// SendNotFoundMsgToClient prepares:
+// SendErrorMsgToClient prepares:
 // - a INTERNAL SERVER ERROR response header;
 // - a JSON body containing:
 //   * "ok" attribute, set to false;
@@ -79,6 +79,17 @@ func SendErrorMsgToClient(w *http.ResponseWriter, err error) {
 //   * "data" attribute set to {}
 func SendNotFoundMsgToClient(w *http.ResponseWriter, err error) {
 	(*w).WriteHeader(http.StatusNotFound)
+	body := fmt.Sprintf(`{
+			"ok" : false,
+			"msg" : "%s",
+			"data" : {}
+		}`, err.Error())
+	(*w).Write([]byte(body))
+	//
+}
+
+func SendBadRequestMsgToClient(w *http.ResponseWriter, err error) {
+	(*w).WriteHeader(http.StatusBadRequest)
 	body := fmt.Sprintf(`{
 			"ok" : false,
 			"msg" : "%s",
