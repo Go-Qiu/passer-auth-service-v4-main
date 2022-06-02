@@ -88,6 +88,12 @@ func SendNotFoundMsgToClient(w *http.ResponseWriter, err error) {
 	//
 }
 
+// SendBadRequestMsgToClient prepares:
+// - a BAD REQUEST response header;
+// - a JSON body containing:
+//   * "ok" attribute, set to false;
+//   * "msg" attribute set to the error message passed in;
+//   * "data" attribute set to {}
 func SendBadRequestMsgToClient(w *http.ResponseWriter, err error) {
 	(*w).WriteHeader(http.StatusBadRequest)
 	body := fmt.Sprintf(`{

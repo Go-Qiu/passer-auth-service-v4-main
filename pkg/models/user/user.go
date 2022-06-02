@@ -16,6 +16,13 @@ type User struct {
 	DateCreated string `json:"dateCreated"`
 }
 
+type UpdateUser struct {
+	NameFirst string `json:"nameFirst"`
+	NameLast  string `json:"nameLast"`
+	IsActive  bool   `json:"isActive"`
+	IsAgent   bool   `json:"isAgent"`
+}
+
 type NewUserRegister struct {
 	User
 	PwHash string `json:"pwHash"`
@@ -157,5 +164,24 @@ func (um *UserModel) DeleteUserById(id string) error {
 	}
 
 	// ok. deleted.
+	return nil
+}
+
+func (um *UserModel) UpdateUserById(id string, update UpdateUser) error {
+	stmt := `UPDATE Users 
+	SET 
+		nameFirst = ?
+		, nameLast = ?
+		, isActive = ?
+		, isAgent = ?
+	WHERE id = ?;`
+
+	// execute the prepared sql script.
+	_, err := um.db.Exec(stmt, update.NameFirst, update.NameLast, update.IsActive, update.IsAgent, id)
+	if err != nil {
+		return err
+	}
+
+	// ok.
 	return nil
 }

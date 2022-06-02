@@ -96,7 +96,7 @@ func (ctl *CrudCtl) GetById(w http.ResponseWriter, r *http.Request) {
 	if id == "" {
 		// empty id string
 		customErr := errors.New(`[USER-CTL] userid is a require input and cannot be empty`)
-		utils.SendErrorMsgToClient(&w, customErr)
+		utils.SendBadRequestMsgToClient(&w, customErr)
 		return
 	}
 
@@ -250,14 +250,65 @@ func (ctl *CrudCtl) Create(w http.ResponseWriter, r *http.Request) {
 
 func (ctl *CrudCtl) UpdateById(w http.ResponseWriter, r *http.Request) {
 
+	params := mux.Vars(r)
+	id := params["id"]
+	if strings.TrimSpace(id) == "" {
+		// empty id string
+		customErr := errors.New(`[USER-CTL] id is a require input and cannot be empty`)
+		utils.SendBadRequestMsgToClient(&w, customErr)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
 	// get the specific user
 
-	// delete the specific user
+	// get the JSON body
+	update := modelsUser.UpdateUser{}
+	err := utils.ParseBody(r, &update)
+	if err != nil {
+		customErr := errors.New(`[USER-CTL] fail to parse result into JSON`)
+		utils.SendBadRequestMsgToClient(&w, customErr)
+		return
+	}
 
-	// add the specific user
+	// instantiate a user model struct.
+	um := modelsUser.New(ctl.db)
+
+	// check if the user data exist (before updating).
+	_, err = um.GetUserById(id)
+	if err != nil {
+		// not found.
+		customErr := errors.New(`[USER-CTL] user data not found`)
+		utils.SendNotFoundMsgToClient(&w, customErr)
+		return
+	}
+
+	err = um.UpdateUserById(id, update)
+	if err != nil {
+		customErr := errors.New(`[USER-CTL] fail to update user data`)
+		utils.SendErrorMsgToClient(&w, customErr)
+		return
+	}
+
+	// get the user data (after update).
+	up, err := um.GetUserById(id)
+	if err != nil {
+		// not found.
+		customErr := errors.New(`[USER-CTL] user data not found`)
+		utils.SendNotFoundMsgToClient(&w, customErr)
+		return
+	}
+
+	data, err := json.Marshal(up)
+	if err != nil {
+		customErr := errors.New(`[USER-CTL] fail to parse JSON data`)
+		utils.SendErrorMsgToClient(&w, customErr)
+		return
+	}
 
 	// prepare the response.
-	w.Header().Set("Content-Type", "application/json")
+	utils.SendDataToClient(&w, data, `[USER-CTL] user data updated`)
 
 }
 
