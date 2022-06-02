@@ -35,7 +35,7 @@ func (um *UserModel) CreateUser() *User {
 func (um *UserModel) GetAll() (*[]User, error) {
 
 	stmt := `SELECT 
-	  id
+	id
 	, email
 	, nameFirst
 	, nameLast
@@ -105,7 +105,7 @@ func (um *UserModel) GetUserByEmail(email string) (*User, error) {
 	, isAgent
 	, dateCreated
 	FROM PASSER_AUTH.Users 
-	WHERE id = ?
+	WHERE email = ?
 	`
 	row := um.db.QueryRow(stmt, email)
 	err := row.Scan(&u.Id, &u.Email, &u.NameFirst, &u.NameLast, &u.IsActive, &u.IsAgent, &u.DateCreated)

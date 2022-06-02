@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"database/sql"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -97,13 +98,22 @@ func (ctl *CrudCtl) GetByEmail(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	um := modelsUser.New(ctl.db)
-	email := params["email"]
-	if email == "" {
+	emailB64 := params["email"]
+	if emailB64 == "" {
 		// empty id string
 		customErr := errors.New(`[USER-CTL] email is a require input and cannot be empty`)
 		utils.SendErrorMsgToClient(&w, customErr)
 		return
 	}
+
+	// decode the base64 encoded email parameter.
+	emailByte, err := base64.StdEncoding.DecodeString(emailB64)
+	if err != nil {
+		customErr := errors.New(`[USER-CTL] fail to read email attribute`)
+		utils.SendErrorMsgToClient(&w, customErr)
+		return
+	}
+	email := string(emailByte)
 
 	// sanitize the id here.
 
