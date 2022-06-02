@@ -8,11 +8,11 @@ import (
 
 // RegisterUsersRoutes sets all the route path patterns and handlers maps
 // for handling Users CRUD API requests.
-var RegisterUsersRoutes = func(router *mux.Router) {
+var RegisterUsersRoutes = func(router *mux.Router, ctl *controllers.CrudCtl) {
 
-	router.HandleFunc("/", controllers.GetAllUsers).Methods("GET")
-	router.HandleFunc("/", controllers.AddUser).Methods("POST")
-	router.HandleFunc("/{userid}", controllers.GetUserById).Methods("GET")
-	router.HandleFunc("/{userid}", controllers.UpdateUserById).Methods("PUT")
-	router.HandleFunc("/{userid}", controllers.DeleteUserById).Methods("DELETE")
+	router.HandleFunc("/", ctl.GetAll).Methods("GET")
+	router.HandleFunc("/", ctl.Create).Methods("POST")
+	router.HandleFunc("/{userid}", ctl.GetById).Methods("GET")
+	router.HandleFunc("/{userid}", ctl.UpdateById).Methods("PUT")
+	router.HandleFunc("/{userid}", ctl.DeleteById).Methods("DELETE")
 }

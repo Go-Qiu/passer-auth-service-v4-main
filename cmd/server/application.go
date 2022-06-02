@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"passer-auth-service-v4/pkg/controllers"
 	"passer-auth-service-v4/pkg/routes"
 	"runtime/debug"
 
@@ -12,8 +13,9 @@ import (
 
 // application struct is for facilitating the implementation of the dependencies injection model.
 type application struct {
-	errorLog *log.Logger
-	infoLog  *log.Logger
+	errorLog     *log.Logger
+	infoLog      *log.Logger
+	crudCtlUsers *controllers.CrudCtl
 }
 
 // Users method to direct request to operate on users related data to
@@ -54,7 +56,7 @@ func (a *application) clientError(w http.ResponseWriter, status int, msg ...stri
 // }
 
 // routesv2 returns a gorilla/mux router that contains all the route-handler mappings.
-func (a *application) routesV2() *mux.Router {
+func (a *application) routes() *mux.Router {
 
 	// instantiate a gorilla mux router.
 	r := mux.NewRouter()
@@ -68,7 +70,7 @@ func (a *application) routesV2() *mux.Router {
 
 	// users routes
 	userRoutes := g.PathPrefix("/users/").Subrouter()
-	routes.RegisterUsersRoutes(userRoutes)
+	routes.RegisterUsersRoutes(userRoutes, a.crudCtlUsers)
 
 	return r
 }

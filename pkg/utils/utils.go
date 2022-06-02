@@ -48,3 +48,26 @@ func GenerateID() string {
 	ID := fmt.Sprintf("%d.%02d.%02d.%08d", year, int(month), day, randomNumber)
 	return ID
 }
+
+// SendErrorMsgToClient sends a http error status (in the header) with the JSON body to the requesting client.
+func SendErrorMsgToClient(w *http.ResponseWriter, err error) {
+	(*w).WriteHeader(http.StatusInternalServerError)
+	body := fmt.Sprintf(`{
+			"ok" : false,
+			"msg" : "%s",
+			"data" : {}
+		}`, err.Error())
+	(*w).Write([]byte(body))
+	//
+}
+
+func SendListToClient(w *http.ResponseWriter, data []byte) {
+	(*w).WriteHeader(http.StatusOK)
+	body := fmt.Sprintf(`{
+		"ok" : true,
+		"msg" : "found",
+		"data" : %s
+	}`, string(data))
+	(*w).Write([]byte(body))
+	//
+}

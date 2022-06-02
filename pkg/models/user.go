@@ -2,8 +2,6 @@ package models
 
 import (
 	"database/sql"
-	"log"
-	"passer-auth-service-v4/pkg/config"
 )
 
 var db *sql.DB
@@ -16,13 +14,6 @@ type User struct {
 	IsActive    bool   `json:"isActive"`
 	IsAgent     bool   `json:"isAgent"`
 	DateCreated string `json:"dateCreated"`
-	DateUpdated string `json:"dateUpdated"`
-}
-
-func init() {
-	log.Println("triggered init() at user.go")
-	config.Connect()
-	db = config.GetDB()
 }
 
 func (u *User) CreateUser() *User {
@@ -32,22 +23,48 @@ func (u *User) CreateUser() *User {
 	return u
 }
 
-func (u *User) GetAllUsers() []User {
-	var Users []User
+func (u *User) GetAll(db *sql.DB) ([]User, error) {
 
-	// get all users code here
+	stmt := `SELECT 
+	  id
+	, email
+	, nameFirst
+	, nameLast
+	, isActive
+	, isAgent
+	, dateCreated
+	FROM PASSER_AUTH.Users
+	`
+	results, err := db.Query(stmt)
+	if err != nil {
+		return nil, err
+	}
 
-	return Users
+	// ok.
+	// slice to cache the results.
+	var users []User
+
+	for results.Next() {
+		var user User
+		err = results.Scan(&user.Id, &user.Email, &user.NameFirst, &user.NameLast, &user.IsActive, &user.IsAgent, &user.DateCreated)
+		if err != nil {
+			return nil, err
+		}
+
+		users = append(users, user)
+	}
+	return users, nil
+	//
 }
 
-func (u *User) GetUserById(id string) *User {
+func (u *User) GetUserById(db *sql.DB, id string) *User {
 
 	// get user by id code here
 
 	return u
 }
 
-func (u *User) DeleteUserById(id string) error {
+func (u *User) DeleteUserById(db *sql.DB, id string) error {
 
 	// delete user by id code here.
 

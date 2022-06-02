@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"passer-auth-service-v4/pkg/controllers"
 
 	"github.com/joho/godotenv"
 )
@@ -21,14 +22,27 @@ func main() {
 		errorLog.Fatal(errString)
 	}
 	ADDR := os.Getenv("SERVER_ADDR")
+	DSN_AUTH := os.Getenv("DSN_AUTH")
+
+	// instantiate a mysql connections pool struct;
+	// and checked that the connection to the database is working.
+	db, err := OpenDB(DSN_AUTH)
+	if err != nil {
+		errorLog.Fatal(err)
+	}
+	defer db.Close()
+
+	// instantiate a Users CRUD controller.
+	crudUsers := controllers.New(db, "Users")
 
 	// declare and instantiate a web application
 	app := &application{
-		errorLog: errorLog,
-		infoLog:  infoLog,
+		errorLog:     errorLog,
+		infoLog:      infoLog,
+		crudCtlUsers: crudUsers,
 	}
 
-	r := app.routesV2()
+	r := app.routes()
 
 	// // associate the mux router with the root route of the http server
 	// http.Handle("/", r)
