@@ -35,11 +35,6 @@ type paramsAdd struct {
 	IsAgent   bool   `json:"isAgent"`
 }
 
-// type newUserRegister struct {
-// 	modelsUser.User
-// 	PwHash string `json:"pwHash"`
-// }
-
 // New returns an instance of the CRUD controller.
 func New(db *sql.DB, name string) *CrudCtl {
 	ctl := &CrudCtl{db: db, name: name}
