@@ -132,6 +132,24 @@ func SendBadRequestMsgToClient(w *http.ResponseWriter, err error) {
 	//
 }
 
+// SendForbiddenMsgToClient prepares:
+// - a FORBIDDEN response header;
+// - a JSON body containing:
+//   * "ok" attribute, set to false;
+//   * "msg" attribute set to the error message passed in;
+//   * "data" attribute set to {}
+func SendForbiddenMsgToClient(w *http.ResponseWriter, err error) {
+	(*w).WriteHeader(http.StatusForbidden)
+	body := fmt.Sprintf(`{
+			"ok" : false,
+			"msg" : "%s",
+			"data" : {}
+		}`, err.Error())
+	(*w).Write([]byte(body))
+
+	//
+}
+
 // SendDataToClient prepares:
 // - a OK header;
 // - a JSON body containing:
@@ -171,6 +189,5 @@ func SendDataToClient(w *http.ResponseWriter, data []byte, msg string) {
 		(*w).Write([]byte(body))
 		//
 	}
-
 	//
 }

@@ -13,7 +13,7 @@ func init() {
 
 // RegisterAuthRoutes sets all the route patterns and handlers maps
 // for handling Authentication requests.
-var RegisterAuthRoutes = func(router *mux.Router) {
-	router.HandleFunc("/auth", controllers.Auth).Methods("POST")
-	router.HandleFunc("/verifytoken", controllers.VerifyToken).Methods("GET")
+var RegisterAuthRoutes = func(router *mux.Router, ctl *controllers.AuthCtl) {
+	router.HandleFunc("/auth", ctl.Auth).Methods("POST")
+	router.HandleFunc("/verifytoken", ctl.VerifyToken).Methods("GET")
 }

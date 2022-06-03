@@ -16,6 +16,7 @@ type application struct {
 	errorLog     *log.Logger
 	infoLog      *log.Logger
 	crudCtlUsers *controllers.CrudCtl
+	authCtl      *controllers.AuthCtl
 }
 
 // Users method to direct request to operate on users related data to
@@ -66,7 +67,7 @@ func (a *application) routes() *mux.Router {
 	g := r.PathPrefix("/api/v4").Subrouter()
 
 	// authentication routes
-	routes.RegisterAuthRoutes(g)
+	routes.RegisterAuthRoutes(g, a.authCtl)
 
 	// users routes
 	userRoutes := g.PathPrefix("/users/").Subrouter()

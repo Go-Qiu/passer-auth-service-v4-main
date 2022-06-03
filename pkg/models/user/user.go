@@ -32,6 +32,11 @@ type ResetPasswordParams struct {
 	Password string `json:"password"`
 }
 
+type AuthUser struct {
+	User
+	PwHash string
+}
+
 type UserModel struct {
 	db *sql.DB
 }

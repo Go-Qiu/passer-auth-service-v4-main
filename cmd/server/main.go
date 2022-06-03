@@ -34,12 +34,14 @@ func main() {
 
 	// instantiate a Users CRUD controller.
 	crudUsers := controllers.New(db, "Users")
+	authCtl := controllers.NewAuthCtl(db, "JWT Auth")
 
 	// declare and instantiate a web application
 	app := &application{
 		errorLog:     errorLog,
 		infoLog:      infoLog,
 		crudCtlUsers: crudUsers,
+		authCtl:      authCtl,
 	}
 
 	r := app.routes()
