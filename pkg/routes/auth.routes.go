@@ -3,6 +3,7 @@ package routes
 import (
 	"log"
 	"passer-auth-service-v4/pkg/controllers"
+	"passer-auth-service-v4/pkg/middlewares"
 
 	"github.com/gorilla/mux"
 )
@@ -15,5 +16,5 @@ func init() {
 // for handling Authentication requests.
 var RegisterAuthRoutes = func(router *mux.Router, ctl *controllers.AuthCtl) {
 	router.HandleFunc("/auth", ctl.Auth).Methods("POST")
-	router.HandleFunc("/verifytoken", ctl.VerifyToken).Methods("GET")
+	router.HandleFunc("/verifytoken", middlewares.ValidateToken(ctl.VerifyToken)).Methods("GET")
 }
