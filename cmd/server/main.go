@@ -5,8 +5,6 @@ import (
 	"net/http"
 	"os"
 	"passer-auth-service-v4/pkg/controllers"
-
-	"github.com/joho/godotenv"
 )
 
 func main() {
@@ -16,13 +14,10 @@ func main() {
 	errorLog := log.New(os.Stderr, "[ERROR]\t", log.Ldate|log.Ltime|log.Lshortfile)
 
 	// get .env values
-	err := godotenv.Load("../../.env")
-	if err != nil {
-		errString := "[AUTH-SVC]: fail to load .env"
-		errorLog.Fatal(errString)
-	}
-	ADDR := os.Getenv("SERVER_ADDR")
-	DSN_AUTH := os.Getenv("DSN_AUTH")
+	config := getConfigurations()
+
+	ADDR := config.SERVER_ADDRESS
+	DSN_AUTH := config.DSN.AUTH
 
 	// instantiate a mysql connections pool struct;
 	// and checked that the connection to the database is working.
@@ -33,8 +28,8 @@ func main() {
 	defer db.Close()
 
 	// instantiate a Users CRUD controller.
-	crudUsers := controllers.New(db, "Users")
-	authCtl := controllers.NewAuthCtl(db, "JWT Auth")
+	crudUsers := controllers.New(db, "Users", config.DATE_CREATED_FORMAT)
+	authCtl := controllers.NewAuthCtl(db, "JWT Auth", &config.JWT)
 
 	// declare and instantiate a web application
 	app := &application{
@@ -57,9 +52,11 @@ func main() {
 	}
 
 	app.infoLog.Printf("HTTPS Server started and listening on https://%s ...", ADDR)
-	err = srv.ListenAndServeTLS("../../ssl/cert03.pem", "../../ssl/key03.pem")
+	// err = srv.ListenAndServeTLS("../../ssl/cert03.pem", "../../ssl/key03.pem")
+	err = srv.ListenAndServeTLS("ssl/cert03.pem", "ssl/key03.pem")
+
 	if err != nil {
 		app.errorLog.Fatal(err)
 	}
-	// log.Fatal(http.ListenAndServe(":9090", r))
+	//
 }

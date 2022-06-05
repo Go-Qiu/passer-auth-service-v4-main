@@ -13,6 +13,7 @@ import (
 type application struct {
 	errorLog     *log.Logger
 	infoLog      *log.Logger
+	config       *Config
 	crudCtlUsers *controllers.CrudCtl
 	authCtl      *controllers.AuthCtl
 }

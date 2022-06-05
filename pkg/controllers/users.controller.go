@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	modelsUser "passer-auth-service-v4/pkg/models/user"
 	"passer-auth-service-v4/pkg/utils"
 	"strings"
@@ -20,8 +19,9 @@ import (
 
 // CrudCtl is a struct that represents a CRUD controller, in a MVC pattern.
 type CrudCtl struct {
-	db   *sql.DB
-	name string
+	db               *sql.DB
+	name             string
+	dateFormatString string
 }
 
 // paramsAdd is the struct for storing the data
@@ -36,8 +36,8 @@ type paramsAdd struct {
 }
 
 // New returns an instance of the CRUD controller.
-func New(db *sql.DB, name string) *CrudCtl {
-	ctl := &CrudCtl{db: db, name: name}
+func New(db *sql.DB, name string, dateFormat string) *CrudCtl {
+	ctl := &CrudCtl{db: db, name: name, dateFormatString: dateFormat}
 	return ctl
 }
 
@@ -175,7 +175,7 @@ func (ctl *CrudCtl) Create(w http.ResponseWriter, r *http.Request) {
 		utils.SendErrorMsgToClient(&w, customErr)
 		return
 	}
-	dateFormatString := os.Getenv("DATE_CREATED_FORMAT")
+	// dateFormatString := os.Getenv("DATE_CREATED_FORMAT")
 
 	w.Header().Set("Content-Type", "application/json")
 
@@ -222,7 +222,8 @@ func (ctl *CrudCtl) Create(w http.ResponseWriter, r *http.Request) {
 	newUser.IsAgent = newUserIn.IsAgent
 
 	// created date.
-	newUser.DateCreated = time.Now().Local().Format(dateFormatString)
+	// newUser.DateCreated = time.Now().Local().Format(dateFormatString)
+	newUser.DateCreated = time.Now().Local().Format(ctl.dateFormatString)
 
 	// add the new user into database
 	err = um.AddUser(&newUser)

@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	modelsAuth "passer-auth-service-v4/pkg/models/auth"
 	"passer-auth-service-v4/pkg/utils"
 	"strconv"
@@ -15,10 +14,18 @@ import (
 	"github.com/joho/godotenv"
 )
 
+// JWTConfig is a struct for storing the JWT configuration settings.
+type JWTConfig struct {
+	ISSUER     string
+	EXP_MIN    string
+	SECRET_KEY string
+}
+
 // AuthCtl is a struct that represents a authentication controller, in a MVC pattern.
 type AuthCtl struct {
-	db   *sql.DB
-	name string
+	db        *sql.DB
+	name      string
+	jwtConfig *JWTConfig
 }
 
 var (
@@ -32,8 +39,8 @@ var (
 // NewAuthCtl sets:
 // - the database connection pools to use
 // - the name assigned to this struct (for reference purpoe)
-func NewAuthCtl(db *sql.DB, name string) *AuthCtl {
-	return &AuthCtl{db: db, name: name}
+func NewAuthCtl(db *sql.DB, name string, jwtConfig *JWTConfig) *AuthCtl {
+	return &AuthCtl{db: db, name: name, jwtConfig: jwtConfig}
 }
 
 // Auth executes the authentication flow using:
@@ -55,10 +62,13 @@ func (a *AuthCtl) Auth(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// set the jwt issuer value
-	JWT_ISSUER := os.Getenv("JWT_ISSUER")
+	// JWT_ISSUER := os.Getenv("JWT_ISSUER")
+	JWT_ISSUER := a.jwtConfig.ISSUER
 
 	// set the jwt expiry time lapse (in minutes)
-	JWT_EXP_MINUTES, err := strconv.Atoi(os.Getenv("JWT_EXP_MINUTES"))
+	// JWT_EXP_MINUTES, err := strconv.Atoi(os.Getenv("JWT_EXP_MINUTES"))
+	JWT_EXP_MINUTES, err := strconv.Atoi(a.jwtConfig.EXP_MIN)
+
 	if err != nil {
 		customErr := errors.New(`[AUTH-CTL] fail to load .env parameters`)
 		utils.SendErrorMsgToClient(&w, customErr)
@@ -98,7 +108,7 @@ func (a *AuthCtl) Auth(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var token string
-	token, err = generateJWT(pl)
+	token, err = generateJWT(pl, *a.jwtConfig)
 	if err != nil {
 		customErr := errors.New(`[AUTH-CTL] fail to generate JWT`)
 		utils.SendForbiddenMsgToClient(&w, customErr)
@@ -148,14 +158,14 @@ func (a *AuthCtl) VerifyToken(w http.ResponseWriter, r *http.Request) {
 }
 
 // generateJWT will generate a JWT using the header and payload passed in.
-func generateJWT(payload utils.JWTPayload) (string, error) {
+func generateJWT(payload utils.JWTPayload, config JWTConfig) (string, error) {
 
 	// get .env values
 	err := godotenv.Load("../../.env")
 	if err != nil {
 		return "", ErrEnvNotLoaded
 	}
-	JWT_SECRET_KEY := os.Getenv("JWT_SECRET_KEY")
+	// JWT_SECRET_KEY := os.Getenv("JWT_SECRET_KEY")
 
 	header := `{
 		"alg": "SHA512",
@@ -168,7 +178,7 @@ func generateJWT(payload utils.JWTPayload) (string, error) {
 		return "", ErrPayloadParsing
 	}
 
-	token := utils.Generate(header, string(pl), JWT_SECRET_KEY)
+	token := utils.Generate(header, string(pl), config.SECRET_KEY)
 
 	return token, nil
 }
