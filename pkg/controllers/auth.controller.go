@@ -10,8 +10,6 @@ import (
 	"passer-auth-service-v4/pkg/utils"
 	"strconv"
 	"time"
-
-	"github.com/joho/godotenv"
 )
 
 // JWTConfig is a struct for storing the JWT configuration settings.
@@ -53,20 +51,11 @@ func (a *AuthCtl) Auth(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	// get .env values
-	err := godotenv.Load("../../.env")
-	if err != nil {
-		customErr := errors.New(`[AUTH-CTL] fail to load .env parameters`)
-		utils.SendErrorMsgToClient(&w, customErr)
-		return
-		//
-	}
 
 	// set the jwt issuer value
-	// JWT_ISSUER := os.Getenv("JWT_ISSUER")
 	JWT_ISSUER := a.jwtConfig.ISSUER
 
 	// set the jwt expiry time lapse (in minutes)
-	// JWT_EXP_MINUTES, err := strconv.Atoi(os.Getenv("JWT_EXP_MINUTES"))
 	JWT_EXP_MINUTES, err := strconv.Atoi(a.jwtConfig.EXP_MIN)
 
 	if err != nil {
@@ -159,13 +148,6 @@ func (a *AuthCtl) VerifyToken(w http.ResponseWriter, r *http.Request) {
 
 // generateJWT will generate a JWT using the header and payload passed in.
 func generateJWT(payload utils.JWTPayload, config JWTConfig) (string, error) {
-
-	// get .env values
-	err := godotenv.Load("../../.env")
-	if err != nil {
-		return "", ErrEnvNotLoaded
-	}
-	// JWT_SECRET_KEY := os.Getenv("JWT_SECRET_KEY")
 
 	header := `{
 		"alg": "SHA512",
