@@ -16,8 +16,11 @@ func main() {
 	// get .env values
 	config := getConfigurations()
 
-	ADDR := config.SERVER_ADDRESS
-	DSN_AUTH := config.DSN.AUTH
+	// ADDR := config.SERVER_ADDRESS
+	// DSN_AUTH := config.DSN.AUTH
+	ADDR := os.Getenv("SERVER_ADDR")
+	DSN_AUTH := os.Getenv("DSN_AUTH")
+	DATE_CREATED_FORMAT := os.Getenv("DATE_CREATED_FORMAT")
 
 	// instantiate a mysql connections pool struct;
 	// and checked that the connection to the database is working.
@@ -28,7 +31,7 @@ func main() {
 	defer db.Close()
 
 	// instantiate a Users CRUD controller.
-	crudUsers := controllers.New(db, "Users", config.DATE_CREATED_FORMAT)
+	crudUsers := controllers.New(db, "Users", DATE_CREATED_FORMAT)
 	authCtl := controllers.NewAuthCtl(db, "JWT Auth", &config.JWT)
 
 	// declare and instantiate a web application
@@ -52,7 +55,6 @@ func main() {
 	}
 
 	app.infoLog.Printf("HTTPS Server started and listening on https://%s ...", ADDR)
-	// err = srv.ListenAndServeTLS("../../ssl/cert03.pem", "../../ssl/key03.pem")
 	err = srv.ListenAndServeTLS("ssl/cert03.pem", "ssl/key03.pem")
 
 	if err != nil {

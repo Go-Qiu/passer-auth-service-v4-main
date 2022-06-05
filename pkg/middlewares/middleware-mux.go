@@ -10,8 +10,6 @@ import (
 	"os"
 	"passer-auth-service-v4/pkg/utils"
 	"strings"
-
-	"github.com/joho/godotenv"
 )
 
 // ValidateToken is a middleware that will check for the presence of a 'Token' attribute in the request header.
@@ -22,14 +20,8 @@ import (
 func ValidateToken(next http.HandlerFunc) http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 
-		// get .env values
-		err := godotenv.Load("../../.env")
-		if err != nil {
-			res.Header().Set("Content-Type", "application/json")
-			customErr := errors.New(`[MW] fail to load .env parameters`)
-			utils.SendErrorMsgToClient(&res, customErr)
-			return
-		}
+		// this configuration setting was first loaded from the .env file
+		// in the main() function.
 		JWT_SECRET_KEY := os.Getenv("JWT_SECRET_KEY")
 
 		// get the jwt from the request header.

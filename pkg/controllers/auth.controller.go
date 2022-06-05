@@ -131,7 +131,6 @@ func (a *AuthCtl) VerifyToken(w http.ResponseWriter, r *http.Request) {
 
 	//
 	authorization := r.Header.Get("Authorization")
-	// token := strings.TrimPrefix(authorization, "Bearer ")
 
 	msg := fmt.Sprintln(`{
 		"ok" : true,
